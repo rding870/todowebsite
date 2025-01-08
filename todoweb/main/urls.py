@@ -9,6 +9,7 @@ urlpatterns = [
     path('api/', include('main.api.urls')),
     
     ##path('api/todo-lists/<int:id>/', views.todo_list_detail, name='todo_list_detail'),
-    path('api/todo-items/<int:id>/', views.todo_items, name='todo_items'),
+    path('api/todo-items/', views.todo_items, name='todo_items'),
+    path('api/todo-items/<int:id>/', views.one_item, name='one_item'),
 ]
 
