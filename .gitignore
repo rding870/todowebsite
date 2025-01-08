@@ -1,0 +1,7 @@
+venv/
+todoweb/db.sqlite3
+todoweb/main/__pycache__/
+todoweb/todoweb/__pycache__/
+node_modules/
+frontend/node_modules/
+todoweb/main/api/__pycache__/
