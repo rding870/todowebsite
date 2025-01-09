@@ -6,6 +6,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from .models import ToDoList, Item
 from itertools import chain
 from rest_framework import status
+from datetime import timedelta
 from django.shortcuts import get_object_or_404
 from .forms import AddNewTask
 from .api.serializers import ToDoListSerializer, ItemSerializer
@@ -31,20 +32,48 @@ def index(response, id):
 
 def home(response):
     return render(response, "main/home.html")
+@api_view(['GET', 'POST'])
 
-def create(response):
-    if response.method == "POST":
-        form = AddNewTask(response.POST) # Dictionary of all the different attributes
-        if form.is_valid():
-            task = form.cleaned_data["task"]
-            complete = form.cleaned_data["complete"]
-            duration = form.cleaned_data["duration"]
-            t = Item(todolist=ToDoList.objects.get(id=1), text=task, complete=complete, duration=duration)
+def create(request):
+    if request.method == "POST":
+        task = request.data.get("task")
+        complete = request.data.get("complete", False)
+        duration = request.data.get("duration")
+
+        if not task or not duration:
+            return Response(
+                {"error": "Task and duration are required fields."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Convert duration string to timedelta
+        try:
+            hours, minutes, seconds = map(int, duration.split(":"))
+            duration = timedelta(hours=hours, minutes=minutes, seconds=seconds)
+        except ValueError:
+            return Response(
+                {"error": "Invalid duration format. Expected HH:MM:SS."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            todo_list = ToDoList.objects.get(id=1)
+            t = Item(todolist=todo_list, text=task, complete=complete, duration=duration)
             t.save()
-        return HttpResponseRedirect("/1")
-    else:
-        form = AddNewTask()
-    return render(response, "main/create.html", {"form":form})
+
+            serializer = ItemSerializer(t)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    elif request.method == "GET":
+        items = Item.objects.all()
+        serializer = ItemSerializer(items, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def one_item(request, id):
@@ -56,6 +85,7 @@ def one_item(request, id):
     if request.method == 'DELETE':
         item.delete()
         return Response({"message": "Item deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
 @api_view(['GET', 'PUT'])
 def todo_items(request):
     try:

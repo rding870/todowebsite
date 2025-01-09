@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function App() {
+  const navigate = useNavigate();
   const [listName, setListName] = useState({}); // Default to an empty object to avoid errors
   const [items, setItems] = useState([]); // State for items
 
@@ -77,7 +79,10 @@ function App() {
       console.error("Error deleting item:", error.message, error.response?.data);
     }
   };
-
+  const handleNew = () => {
+    // Redirect to the desired page
+    navigate('/new/');
+  };
   return (
     <div>
       <h1>{listName[0]?.name }</h1>
@@ -102,6 +107,7 @@ function App() {
           ))}
         </ol>
         <button type="submit">Save</button>
+        <button type="button" onClick={() => handleNew()}> New </button>
       </form>
     </div>
   );
